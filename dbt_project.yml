@@ -23,3 +23,6 @@ models:
     silver:
       +database: singhal
       +schema: fifa_worldcup_silver
+    gold:
+      +database: singhal
+      +schema: fifa_worldcup_gold

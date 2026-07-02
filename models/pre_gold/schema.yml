@@ -1,0 +1,12 @@
+version: 2
+
+models:
+  - name: pre_gold_scorer_resolution
+    description: |
+      Pre-gold gate that ensures all scorers are resolved before gold layer.
+      - Runs pre-gold test
+      - If fails: inserts PENDING → calls AI notebook → retries test ONCE
+      - If passes: continues to gold
+    config:
+      materialized: table
+      tags: ['pre_gold', 'gate']
