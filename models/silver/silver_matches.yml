@@ -81,15 +81,41 @@ models:
               to: ref('silver_matches')
               field: match_id
               
+      - name: team_id
+        description: Team that scored the goal
+        tests:
+          - not_null
+              
+      - name: team_name
+        description: Name of the team that scored
+        tests:
+          - not_null
+              
       - name: scorer_name
         description: Player who scored (parsed from scorer string, no player_id)
         tests:
           - not_null
           
       - name: minute
-        description: Match minute when goal was scored (1-90+)
+        description: >
+          Full minute string with injury time preserved (e.g., "90+3'", "45+1'", "67'").
+          Use for display purposes and detailed timeline visualization.
         tests:
           - not_null
+          
+      - name: minute_base
+        description: >
+          Base minute as integer (e.g., 90, 45, 67) without injury time.
+          Use for sorting, filtering, and aggregations like "goals after 80'".
+        tests:
+          - not_null
+          
+      - name: injury_time_minutes
+        description: >
+          Injury time minutes as integer (e.g., 3 for "90+3'", NULL for "67'").
+          Use for analyzing late goals and injury-time patterns.
+          NULL when goal was scored in regular time (no injury time).
+        # Note: No not_null test - this column is intentionally NULL for regular-time goals
           
       - name: is_penalty
         description: Whether goal was scored from a penalty kick
@@ -106,3 +132,8 @@ models:
           - accepted_values:
               arguments:
                 values: [true, false]
+                
+      - name: goal_string_raw
+        description: Original raw goal string from API (for debugging/reference)
+        tests:
+          - not_null
