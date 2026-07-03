@@ -1,74 +1,78 @@
 {{config(
     materialized='table',
-    tags=['fact', 'events', 'goals']
+    tags=['fact', 'events', 'goals', 'silver']
 )}}
 
--- Parse goal events from scorer strings into normalized event records
+-- ✅ UPDATED: Read directly from bronze.goal_events table
+-- This preserves full goal timestamps (90+3', 45+1', etc.) that were lost in old parsing
 
-WITH home_goals AS (
+WITH goal_events_enriched AS (
     SELECT
-        match_id,
-        home_team_id AS team_id,
-        home_team_name AS team_name,
-        TRUE AS is_home_goal,  -- ← Directly set to TRUE for home goals
-        EXPLODE(
-            FROM_JSON(
-                REGEXP_REPLACE(REGEXP_REPLACE(home_scorers, '\\{', '['), '\\}', ']'),
-                'ARRAY<STRING>'
-            )
-        ) AS goal_string
-    FROM {{ source('bronze', 'matches') }}
-    WHERE home_scorers IS NOT NULL 
-      AND home_scorers != 'null'
-      AND LENGTH(home_scorers) > 5
-),
-
-away_goals AS (
-    SELECT
-        match_id,
-        away_team_id AS team_id,
-        away_team_name AS team_name,
-        FALSE AS is_home_goal,  -- ← Directly set to FALSE for away goals
-        EXPLODE(
-            FROM_JSON(
-                REGEXP_REPLACE(REGEXP_REPLACE(away_scorers, '\\{', '['), '\\}', ']'),
-                'ARRAY<STRING>'
-            )
-        ) AS goal_string
-    FROM {{ source('bronze', 'matches') }}
-    WHERE away_scorers IS NOT NULL 
-      AND away_scorers != 'null'
-      AND LENGTH(away_scorers) > 5
-),
-
-all_goals AS (
-    SELECT * FROM home_goals
-    UNION ALL
-    SELECT * FROM away_goals
+        ge.match_id,
+        ge.player_name AS scorer_name,
+        ge.goal_time,  -- ✅ Full timestamp preserved: "90+3'", "45+1'", "67'"
+        ge.team_id,
+        ge.team_name,
+        
+        -- Extract base minute for sorting/analytics
+        CAST(REGEXP_EXTRACT(ge.goal_time, '([0-9]+)', 1) AS INT) AS minute_base,
+        
+        -- Extract injury time (if any)
+        CASE 
+            WHEN ge.goal_time LIKE '%+%' 
+            THEN CAST(REGEXP_EXTRACT(ge.goal_time, '\\+([0-9]+)', 1) AS INT)
+            ELSE 0
+        END AS injury_time_minutes,
+        
+        -- Enrich with match context
+        m.home_team_id,
+        m.away_team_id,
+        m.home_team_name,
+        m.away_team_name,
+        m.home_score,
+        m.away_score,
+        m.match_type,
+        m.group,
+        m.matchday,
+        m.local_date AS match_date,
+        
+        -- Determine if home/away goal
+        CASE 
+            WHEN ge.team_id = m.home_team_id THEN TRUE 
+            ELSE FALSE 
+        END AS is_home_goal,
+        
+        ge.ingested_at
+        
+    FROM {{ source('bronze', 'goal_events') }} ge
+    INNER JOIN {{ source('bronze', 'matches') }} m
+        ON ge.match_id = m.match_id
 )
 
 SELECT
-    MD5(CONCAT(match_id, team_id, goal_string)) AS goal_event_id,
+    MD5(CONCAT(match_id, team_id, scorer_name, goal_time)) AS goal_event_id,
     match_id,
+    scorer_name,
+    goal_time,  -- ✅ PRESERVED: "90+3'", "45+1'", "67'"
+    minute_base,  -- For analytics: 90, 45, 67
+    injury_time_minutes,  -- For analytics: 3, 1, 0
     team_id,
     team_name,
-    
-    -- Parse player name (everything before the minute)
-    TRIM(REGEXP_EXTRACT(goal_string, '^([^0-9]+)', 1)) AS scorer_name,
-    
-    -- Parse minute
-    CAST(REGEXP_EXTRACT(goal_string, "([0-9]+)'", 1) AS INT) AS minute,
-    
-    -- Detect penalty
-    CASE WHEN goal_string LIKE '%(p)%' THEN TRUE ELSE FALSE END AS is_penalty,
-    
-    -- Home/Away flag (already set in CTEs above)
     is_home_goal,
     
-    goal_string AS goal_string_raw,
-    CURRENT_TIMESTAMP() AS ingested_at
+    -- Match context
+    home_team_id,
+    away_team_id,
+    home_team_name,
+    away_team_name,
+    home_score,
+    away_score,
+    match_type,
+    group,
+    matchday,
+    match_date,
     
-FROM all_goals
-WHERE goal_string IS NOT NULL
-  AND TRIM(goal_string) != ''
-ORDER BY match_id, minute
+    ingested_at
+    
+FROM goal_events_enriched
+ORDER BY match_id, minute_base, injury_time_minutes

@@ -1,6 +1,6 @@
 {{config(
     materialized='table',
-    tags=['dimension', 'scd_type_1', 'current']
+    tags=['silver','dimension', 'scd_type_1', 'current']
 )}}
 
 -- Current group standings with FIFA ranking logic

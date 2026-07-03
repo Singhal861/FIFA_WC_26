@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: fifa_worldcup_silver
+    database: singhal
+    schema: fifa_worldcup_silver
+    tables:
+      - name: silver_player_name_mapping
+        description: "AI-managed mapping table for corrupted scorer names"

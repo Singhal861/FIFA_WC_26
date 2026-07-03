@@ -1,6 +1,6 @@
 {{config(
     materialized='table',
-    tags=['fact', 'matches']
+    tags=['silver','fact', 'matches']
 )}}
 
 -- All 104 World Cup matches unified: group stage + knockout stage

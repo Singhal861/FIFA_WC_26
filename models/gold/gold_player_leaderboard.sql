@@ -26,7 +26,7 @@ penalty_goals AS (
         npm.player_id,
         COUNT(*) AS penalty_goals
     FROM {{ ref('silver_goal_events') }} ge
-    JOIN {{ ref('silver_player_name_mapping') }} npm 
+    JOIN {{ source('fifa_worldcup_silver', 'silver_player_name_mapping') }} npm 
         ON ge.scorer_name = npm.scorer_name
         AND npm.status = 'RESOLVED'  -- ✅ Only RESOLVED
     WHERE ge.is_penalty = TRUE

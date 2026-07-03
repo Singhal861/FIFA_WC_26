@@ -18,6 +18,12 @@ sources:
       - name: matches
         description: Raw match results with scores and goal events
         
+      - name: goal_events
+        description: |
+          Individual goal events extracted from matches with preserved timestamps.
+          Includes player name, goal time (with injury time like '90+3'), team info, and match context.
+          Replaces manual parsing of home_scorers/away_scorers strings from matches table.
+        
       - name: group_standings
         description: Raw group stage standings with points and rankings
         

@@ -1,7 +1,7 @@
 {{config(
     materialized='incremental',
     unique_key=['team_id', 'valid_from'],
-    tags=['scd_type_2', 'history'],
+    tags=['silver','scd_type_2', 'history'],
     pre_hook=[
         "{% if is_incremental() %}
          MERGE INTO {{ this }} AS target

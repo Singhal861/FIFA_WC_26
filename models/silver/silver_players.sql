@@ -1,6 +1,6 @@
 {{config(
     materialized='table',
-    tags=['dimension', 'scd_type_1']
+    tags=['silver','dimension', 'scd_type_1']
 )}}
 
 -- Player dimension - static attributes only

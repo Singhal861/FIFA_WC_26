@@ -1,6 +1,6 @@
 {{config(
     materialized='table',
-    tags=['dimension', 'scd_type_1']
+    tags=['silver','dimension', 'scd_type_1']
 )}}
 
 -- Silver Teams - Clean team dimension (SCD Type 1)

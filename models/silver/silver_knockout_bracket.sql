@@ -1,6 +1,6 @@
 {{config(
     materialized='table',
-    tags=['dimension', 'bracket']
+    tags=['silver','dimension', 'bracket']
 )}}
 
 -- Pure bracket structure only — no match facts here
