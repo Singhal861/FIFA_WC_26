@@ -13,7 +13,7 @@ WITH validation_failures AS (
         'Missing team logo' AS failure_type,
         team_id,
         CONCAT('Team ', team_name, ' missing team_logo') AS failure_detail
-    FROM {{ ref('gold_team_summary') }}
+    FROM {{ ref('gold_fact_team_performance') }}
     WHERE team_logo IS NULL
     
     UNION ALL
@@ -25,7 +25,7 @@ WITH validation_failures AS (
         CONCAT('Team ', team_name, ' missing stats - wins: ', 
                COALESCE(CAST(total_wins AS STRING), 'NULL'),
                ', points: ', COALESCE(CAST(total_points AS STRING), 'NULL')) AS failure_detail
-    FROM {{ ref('gold_team_summary') }}
+    FROM {{ ref('gold_fact_team_performance') }}
     WHERE total_wins IS NULL 
        OR total_losses IS NULL 
        OR total_draws IS NULL

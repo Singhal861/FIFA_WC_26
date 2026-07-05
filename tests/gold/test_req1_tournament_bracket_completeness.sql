@@ -51,7 +51,7 @@ WITH validation_failures AS (
     SELECT
         'Missing winner for completed match' AS failure_type,
         match_id,
-        CONCAT('Match ', match_id, ' is finished (score: ', home_score, '-', away_score, ') but winner_team_id is NULL - check penalty shootout data') AS failure_detail
+        CONCAT('Match ', match_id, ' is finished (score: ', home_score, '-', away_score, ') but winner_team_name is NULL - check penalty shootout data') AS failure_detail
     FROM {{ ref('gold_fact_match_schedule') }}
     WHERE is_knockout = TRUE  -- Only check knockout matches
       AND is_finished = TRUE 

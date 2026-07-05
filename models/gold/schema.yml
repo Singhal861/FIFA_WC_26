@@ -97,41 +97,69 @@ models:
       - name: rank_at_match
         description: Rank position at this match (1-3, with ties)
 
-  - name: gold_points_table
+  - name: gold_fact_team_performance
     description: >
-      Group standings with qualification status (Requirement #5).
-      Shows points, wins, losses, goal difference, rank.
-    columns:
-      - name: rank_overall
-        description: Overall tournament ranking by points
-      - name: rank_in_group
-        description: Position within group (1-4)
-      - name: team_logo
-        description: Team flag/emblem
-      - name: points
-        description: Total points (3 per win, 1 per draw)
-      - name: qualification_status
-        description: Qualified, Disqualified, or In Progress
-
-  - name: gold_team_summary
-    description: >
-      Team aggregate statistics for dashboard.
-      Wins, losses, goals for/against, clean sheets, top assist provider.
+      Unified team performance fact table (Requirements #5 + Team Drill-Down).
+      Replaces gold_points_table + gold_team_summary.
+      Single source of truth combining group standings, tournament stats, and team metadata.
+      Includes both group-specific metrics (for standings) and tournament-wide metrics (for drill-down).
     columns:
       - name: team_name
-        description: Team name
+        description: Team name (primary key)
       - name: team_logo
-        description: Team flag/emblem
+        description: Team flag/emblem URL
+      - name: group_name
+        description: Group assignment (A, B, C, etc.)
+      - name: rank_in_group
+        description: Position within group (1-4)
+      - name: qualification_status
+        description: Qualified, Disqualified, or In Progress
+      - name: group_matches_played
+        description: Number of group stage matches completed
+      - name: group_wins
+        description: Wins in group stage only
+      - name: group_draws
+        description: Draws in group stage only
+      - name: group_losses
+        description: Losses in group stage only
+      - name: group_goals_for
+        description: Goals scored in group stage
+      - name: group_goals_against
+        description: Goals conceded in group stage
+      - name: group_goal_difference
+        description: Goal difference in group stage (GF - GA)
+      - name: total_points
+        description: Total points (3 per win, 1 per draw) - group stage only
+      - name: total_matches
+        description: All tournament matches (group + knockout)
       - name: total_wins
-        description: Total wins in tournament
+        description: Total wins across all tournament stages
+      - name: total_draws
+        description: Total draws across all tournament stages
       - name: total_losses
-        description: Total losses
-      - name: goals_for
-        description: Total goals scored
-      - name: goals_against
-        description: Total goals conceded
+        description: Total losses across all tournament stages
+      - name: total_goals_for
+        description: Total goals scored in tournament
+      - name: total_goals_against
+        description: Total goals conceded in tournament
+      - name: total_goal_difference
+        description: Overall goal difference (GF - GA)
       - name: clean_sheets
         description: Matches with zero goals conceded
+      - name: avg_goals_per_match
+        description: Average goals scored per match
+      - name: win_percentage
+        description: Win rate as percentage (wins / matches)
+      - name: stage
+        description: Current/latest tournament stage reached
+      - name: top_scorer_name
+        description: Team's top goal scorer name
+      - name: top_scorer_goals
+        description: Goals scored by team's top scorer
+      - name: top_assist_provider
+        description: Team's top assist provider name
+      - name: top_assist_count
+        description: Assists by team's top assist provider
 
   - name: gold_team_goals
     description: >

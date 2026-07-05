@@ -13,7 +13,7 @@ WITH validation_failures AS (
         'Missing group assignment' AS failure_type,
         team_id,
         CONCAT('Team ', team_name, ' has NULL group_name') AS failure_detail
-    FROM {{ ref('gold_points_table') }}
+    FROM {{ ref('gold_fact_team_performance') }}
     WHERE group_name IS NULL
     
     UNION ALL
@@ -23,7 +23,7 @@ WITH validation_failures AS (
         'Missing team logo' AS failure_type,
         team_id,
         CONCAT('Team ', team_name, ' missing team_logo') AS failure_detail
-    FROM {{ ref('gold_points_table') }}
+    FROM {{ ref('gold_fact_team_performance') }}
     WHERE team_logo IS NULL
     
     UNION ALL
@@ -35,7 +35,7 @@ WITH validation_failures AS (
         CONCAT('Team ', team_name, ' points mismatch - expected: ',
                CAST((wins * 3 + draws) AS STRING),
                 ', actual: ', CAST(points AS STRING)) AS failure_detail
-    FROM {{ ref('gold_points_table') }}
+    FROM {{ ref('gold_fact_team_performance') }}
     WHERE points != (wins * 3 + draws)
     
     UNION ALL
@@ -47,7 +47,7 @@ WITH validation_failures AS (
         CONCAT('Team ', team_name, ' goal_diff mismatch - expected: ',
                CAST((goals_for - goals_against) AS STRING),
                ', actual: ', CAST(goal_difference AS STRING)) AS failure_detail
-    FROM {{ ref('gold_points_table') }}
+    FROM {{ ref('gold_fact_team_performance') }}
     WHERE goal_difference != (goals_for - goals_against)
     
     UNION ALL
@@ -65,7 +65,7 @@ WITH validation_failures AS (
             group_name,
             rank_in_group,
             ROW_NUMBER() OVER (PARTITION BY group_name ORDER BY rank_in_group) AS expected_position
-        FROM {{ ref('gold_points_table') }}
+        FROM {{ ref('gold_fact_team_performance') }}
     )
     WHERE rank_in_group != expected_position
     
@@ -78,7 +78,7 @@ WITH validation_failures AS (
         CONCAT('Team ', team_name, ' matches mismatch - W+D+L: ',
                CAST((wins + draws + losses) AS STRING),
                ', matches_played: ', CAST(matches_played AS STRING)) AS failure_detail
-    FROM {{ ref('gold_points_table') }}
+    FROM {{ ref('gold_fact_team_performance') }}
     WHERE matches_played != (wins + draws + losses)
 )
 
