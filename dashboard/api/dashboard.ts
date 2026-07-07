@@ -21,14 +21,25 @@ async function executeSQL(statement: string) {
     }
   );
 
-  const result = await response.json();
+  const json = await response.json();
 
   if (!response.ok) {
-    console.error("Databricks Error:", result);
-    throw new Error(JSON.stringify(result, null, 2));
+    console.error("Databricks Error:", json);
+    throw new Error(JSON.stringify(json, null, 2));
   }
 
-  return result;
+  // Convert Databricks response to array of objects
+  const columns = json.manifest.schema.columns.map((c: any) => c.name);
+
+  return json.result.data_array.map((row: any[]) => {
+    const obj: Record<string, any> = {};
+
+    columns.forEach((col: string, index: number) => {
+      obj[col] = row[index];
+    });
+
+    return obj;
+  });
 }
 
 export default async function handler(
@@ -36,9 +47,9 @@ export default async function handler(
   res: VercelResponse
 ) {
   try {
-    // Test query first
-    const result = await executeSQL(`
-      SELECT 1 AS test
+    const summary = await executeSQL(`
+      SELECT *
+      FROM singhal.fifa_worldcup_gold.gold_tournament_summary
     `);
 
     res.setHeader(
@@ -46,7 +57,10 @@ export default async function handler(
       "s-maxage=900, stale-while-revalidate=300"
     );
 
-    return res.status(200).json(result);
+    return res.status(200).json({
+      success: true,
+      summary,
+    });
   } catch (error: any) {
     console.error(error);
 
