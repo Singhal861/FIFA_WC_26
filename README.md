@@ -1,8 +1,12 @@
-# FIFA World Cup 2026 Dashboard - dbt Data Pipeline
+# FIFA World Cup 2026 Dashboard - Data Pipeline
 
 ## 📊 Project Overview
 
-Complete dbt pipeline for FIFA World Cup 2026 dashboard, implementing Bronze → Silver → Gold medallion architecture. Supports 6 core dashboard requirements with live updates, match tracking, player statistics, and tournament visualization.
+Complete data pipeline for FIFA World Cup 2026 dashboard implementing Bronze → Silver → Gold medallion architecture with dbt transformations. Supports **7 core dashboard representations** with live match tracking, player statistics, knockout brackets, and tournament visualization.
+
+**Scheduled Job:** `fifa_WorldCup_2026` (Job ID: 616242111057580)  
+**Schedule:** Twice daily (due to Databricks free edition limitations)  
+**Catalog:** `singhal` (Unity Catalog)
 
 ---
 
@@ -11,146 +15,127 @@ Complete dbt pipeline for FIFA World Cup 2026 dashboard, implementing Bronze →
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    BRONZE LAYER                              │
-│              (Raw Data - No Transformations)                 │
+│         (Raw Data from Dual API Sources)                     │
 ├─────────────────────────────────────────────────────────────┤
-│  📋 players              (78 from SportScore API)           │
-│  📋 teams                (48 teams)                          │
-│  📋 matches              (104 matches)                       │
-│  📋 group_standings      (60 group entries)                  │
-│  📋 stadiums             (16 venues)                         │
-│  📋 goal_events          (300+ match-level goals)            │
+│  🔹 Notebook 1: fifa 2026 Static Raw data fetch             │
+│     • Data Sources:                                          │
+│       - SportScore API: players, teams, group_standings      │
+│       - worldcup26.ir API: matches (104), stadiums (16)      │
+│     • Quality checks: min thresholds before overwrites       │
+│                                                               │
+│  📋 Tables Created:                                          │
+│     players              (78 from SportScore)               │
+│     teams                (48 teams from SportScore)          │
+│     matches              (104 from worldcup26.ir)            │
+│     group_standings      (60 entries from SportScore)        │
+│     stadiums             (16 venues from worldcup26.ir)      │
+│                                                               │
+│  🔹 Notebook 2: Knockout Bracket RAW Analysis                │
+│     • Reads bronze.matches                                   │
+│     • Builds tournament tree (R32→R16→QF→SF→Final)           │
+│     • Maps stadium timezones                                 │
+│     • Quality check: min 25 knockout matches                 │
+│                                                               │
+│  📋 Table Created:                                           │
+│     knockout_bracket     (32 knockout matches)               │
 └─────────────────────────────────────────────────────────────┘
                            ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                    SILVER LAYER                              │
+│                    SILVER LAYER (dbt)                        │
 │            (Cleaned, Joined, Type-2 SCD)                     │
 ├─────────────────────────────────────────────────────────────┤
-│  🥈 silver_teams                                             │
-│  🥈 silver_players                                           │
-│  🥈 silver_matches          (Group + Knockout unified)       │
-│  🥈 silver_goal_events      (Normalized goal timeline)       │
+│  🥈 silver_teams          (from bronze.teams)                │
+│  🥈 silver_players        (from bronze.players)              │
+│  🥈 silver_matches        (Group + Knockout unified)         │
+│     ⭐ Team name normalization logic lives here              │
+│  🥈 silver_goal_events    (derived from matches.home_scorers │
+│                            /away_scorers, NOT from bronze)   │
 │  🥈 silver_group_standings                                   │
-│  🥈 silver_knockout_bracket (Tournament tree structure)      │
+│  🥈 silver_knockout_bracket                                  │
 │  🥈 silver_stadiums                                          │
-│  🥈 silver_player_stats_history (SCD Type 2 snapshots)       │
+│  🥈 silver_player_stats_history (SCD Type 2)                 │
 │  🥈 silver_group_standings_history (SCD Type 2)              │
-│  🥈 ref_stadium_enriched    (Manual: timezone mapping)       │
 └─────────────────────────────────────────────────────────────┘
                            ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                     GOLD LAYER                               │
+│                     GOLD LAYER (dbt)                         │
 │               (Dashboard-Ready Models)                       │
 ├─────────────────────────────────────────────────────────────┤
-│  🏆 gold_tournament_bracket   (Req #1: Bracket viz)         │
-│  🏆 gold_player_leaderboard   (Req #2: Top 10 scorers)      │
-│  🏆 gold_match_schedule       (Req #3,#4: Live/upcoming)    │
-│  🏆 gold_points_table         (Req #5: Group standings)     │
-│  🏆 gold_golden_boot_race     (Req #6: Top 3 timeline)      │
-│  🏆 gold_team_summary         (Team aggregates)             │
-│  🏆 gold_team_goals           (Match-level goal details)    │
-│  🏆 gold_tournament_summary   (Tournament totals)           │
+│  🏆 gold_fact_match_schedule     (DR #1,#3,#4: All matches) │
+│  🏆 gold_team_goals              (DR #1: Goal details)       │
+│  🏆 gold_player_leaderboard      (DR #2: Top 10 scorers)    │
+│  🏆 gold_fact_team_performance   (DR #5: Points table)      │
+│  🏆 gold_golden_boot_race        (DR #6: Top 3 timeline)    │
+│  🏆 gold_tournament_summary      (DR #7: Tournament KPIs)   │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 📋 Dashboard Requirements
+## 🎯 Live Dashboard
 
-### **Requirement #1: Tournament Bracket Visualization**
-**Display:** A vs B → Winner C, team flags, stage progression  
-**On Click:** Total wins, losses, top 2 scorers, points  
-**Gold Model:** `gold_tournament_bracket`
+View the interactive FIFA World Cup 2026 dashboard with all 7 visualizations:
 
-**Columns:**
-- `match_id`, `round` (R32, R16, QF, SF, Final, 3rd)
-- `home_team_name`, `away_team_name`, `winner_name`
-- `home_team_logo`, `away_team_logo`
-- `match_datetime_utc`, `stadium_name`, `stadium_city`
-- `display_order` (for bracket tree rendering)
+**🔗 [FIFA 2026 Dashboard - Click Here](https://singhal-fifa-2026-dashboard.vercel.app/)**
 
----
-
-### **Requirement #2: Top 10 Scorers Leaderboard**
-**Display:** Top 10 players with goals, assists, rating, minutes, matches  
-**On Click:** Spider chart (5 metrics) + highest goals vs team  
-**Gold Model:** `gold_player_leaderboard`
-
-**Columns:**
-- `player_name`, `team_name`, `team_logo`
-- `goals_scored`, `assists`, `rating` (out of 10)
-- `matches_played`, `minutes_played`
-- `highest_goals_vs_team` (e.g., "Brazil (3 goals)")
-
-**Tiebreaker Rules (FIFA Golden Boot):**
-1. Most goals
-2. Most assists
-3. Fewest minutes played
-
----
-
-### **Requirement #3: Live & Upcoming Knockout Matches**
-**Display:** Team A vs B (live/upcoming), team logos, top scorer per team, UTC time, stadium & city  
-**Gold Model:** `gold_match_schedule` (filter: `is_knockout = TRUE`)
-
-**Columns:**
-- `match_status` (Live/Upcoming/Finished)
-- `home_team_logo`, `away_team_logo`
-- `home_top_scorer_name`, `away_top_scorer_name` (match-level)
-- `match_datetime_utc`, `match_date_local`
-- `stadium_name`, `stadium_city`
-- `minutes_elapsed`, `hours_until_kickoff`
-
----
-
-### **Requirement #4: Upcoming Group Stage Matches**
-**Display:** Team A vs B, team logos, UTC time, stadium & city  
-**Gold Model:** `gold_match_schedule` (filter: `is_knockout = FALSE`)
-
-**Columns:** Same as Req #3, filtered to group stage only
-
----
-
-### **Requirement #5: Points Table (Group Standings)**
-**Display:** Team logo, points, wins, losses, qualification status  
-**Order By:** Points DESC, Goal Difference DESC, Goals For DESC  
-**Gold Model:** `gold_points_table`
-
-**Columns:**
-- `rank_overall`, `rank_in_group`
-- `team_name`, `team_logo`
-- `points`, `wins`, `draws`, `losses`
-- `goals_for`, `goals_against`, `goal_difference`
-- `qualification_status` (Qualified/Disqualified/In Progress)
-
-**Qualification Rules:**
-- Top 2 teams per group qualify for knockout stage
-- Points: Win = 3, Draw = 1, Loss = 0
-
----
-
-### **Requirement #6: Golden Boot Race (Line Graph)**
-**Display:** Top 3 scorers progression match-by-match  
-**Handles Ties:** 1,1,2 or 1,2,2 or 1,2,3,3 (DENSE_RANK)  
-**Gold Model:** `gold_golden_boot_race`
-
-**Columns:**
-- `player_name`, `team_name`
-- `match_sequence` (chronological match number)
-- `goals_cumulative` (total goals up to this match)
-- `assists_cumulative`
-- `rank_at_match` (1-3, with ties)
-
-**Data Grain:** ONE ROW PER PLAYER PER MATCH
+**Dashboard Features:**
+1. **Tournament Bracket** - Interactive knockout bracket with TBD logic and goal details (click on fixture block to respective match to see details)
+2. **Top 10 Scorers** - Leaderboard with spider chart (click on player image)
+3. **Live & Upcoming Matches** - Real-time match tracking with countdown timers
+4. **Match History** - Complete record of all finished matches
+5. **Points Table** - Tournament standings & match-by-match details(click on team name / logo)
+6. **Golden Boot Race** - Goal progression timeline for top 3 scorers
+7. **Tournament Summary** - High-level KPIs and statistics
 
 ---
 
 ## 🗂️ Key Data Models
 
-### **Silver Layer**
+### **Bronze Layer** (Notebooks)
+
+#### **fifa 2026 Static Raw data fetch**
+Fetches from dual API sources with quality checks.
+```python
+# SportScore API:
+- players (top 50 scorers + assisters)
+- teams (48 teams with logos)
+- group_standings (60 entries)
+
+# worldcup26.ir API:
+- matches (104 matches with scores)
+- stadiums (16 venues)
+
+# Quality Checks:
+MIN_PLAYERS = 50
+MIN_TEAMS = 40
+MIN_MATCHES = 90
+MIN_STANDINGS = 50
+```
+
+#### **Knockout Bracket RAW Analysis**
+Builds tournament tree structure.
+```python
+# Input: bronze.matches (knockout only)
+# Output: bronze.knockout_bracket
+
+# Features:
+- Match progression tree (which matches feed into which)
+- Stadium timezone mapping (16 venues across USA/Canada/Mexico)
+- Winner tracking for bracket visualization
+
+# Quality Check:
+MIN_KNOCKOUT_MATCHES = 25  # Prevents incomplete data overwrites
+```
+
+---
+
+### **Silver Layer** (dbt)
 
 #### **silver_matches**
-Unified match table (group + knockout).
+Unified match table (group + knockout) with team name normalization.
 ```sql
+-- ALL team name normalization logic resides here
+-- Consumed by all gold models
 -- Columns:
 match_id, stage, home_team_name, away_team_name,
 home_score, away_score, winner_team_id,
@@ -158,7 +143,7 @@ match_date_local, stadium_id, is_finished
 ```
 
 #### **silver_goal_events**
-Normalized goal timeline (one row per goal).
+Derived from `bronze.matches` (home_scorers/away_scorers), NOT a bronze table.
 ```sql
 -- Columns:
 goal_event_id, match_id, team_id, scorer_name,
@@ -175,55 +160,94 @@ matches_played, minutes_played,
 valid_from, valid_to, is_current
 ```
 
-#### **ref_stadium_enriched (Manual Table)**
-Static reference for timezone conversion.
-```sql
--- Columns:
-stadium_id, city, actual_country,
-utc_offset_hours, timezone_name
-```
-**Created once via notebook, not managed by dbt.**
+**Critical for:** Golden Boot Race timeline (Dashboard #6), tracking goal progression
 
 ---
 
-### **Gold Layer**
+### **Gold Layer** (dbt)
 
-#### **gold_match_schedule**
-Serves BOTH Req #3 (knockout) and Req #4 (group stage).
+#### **gold_fact_match_schedule**
+Serves MULTIPLE dashboard representations:
+- Dashboard #1: Tournament bracket (filter: `is_knockout = TRUE`)
+- Dashboard #3: Live/upcoming matches (filter: `match_status IN ('Live', 'Upcoming')`)
+- Dashboard #4: Finished matches (filter: `is_finished = TRUE`)
+- Dashboard #5: Match history on click (filter by team)
+
+**Key Features:**
+- Unified fact table for all match data
+- TBD opponent logic (`home_display_name`, `away_display_name`)
+- Bracket structure (`bracket_position`, `feeds_into_position`)
+- Match status tracking
+- Top scorers per team
+
+#### **gold_team_goals**
+Goal-by-goal details for Dashboard #1 click interaction.
 ```sql
--- Filter for Req #3:
-WHERE is_knockout = TRUE AND match_status IN ('Live', 'Upcoming')
+-- Columns:
+match_id, team_name, scorer_name, minute,
+is_penalty, goal_number_in_match
 
--- Filter for Req #4:
-WHERE is_knockout = FALSE AND match_status = 'Upcoming'
+-- Used for showing goal timing: "Messi (23')", "Di Maria (67') (PEN)"
 ```
 
 #### **gold_player_leaderboard**
-Top 10 scorers with complete stats.
+Top 10 scorers for Dashboard #2.
 ```sql
--- Uses:
-- player_stats_history (current snapshot)
-- goal_events (highest goals vs team)
-
 -- Tiebreaker:
-ORDER BY goals DESC, assists DESC, minutes_played ASC
+ORDER BY 
+    goals_scored DESC,
+    assists DESC,
+    minutes_played ASC
 LIMIT 10
+
+-- Includes percentiles for spider chart
+```
+
+#### **gold_fact_team_performance**
+Tournament points table for Dashboard #5.
+```sql
+-- Aggregate team statistics
+-- Validation:
+total_points = (total_wins × 3) + total_draws
+goal_difference = goals_for - goals_against
 ```
 
 #### **gold_golden_boot_race**
-Match-by-match timeline for top 3 scorers.
+Match-by-match timeline for Dashboard #6.
 ```sql
--- Uses SCD Type 2 snapshots
--- Maps valid_from → match_sequence
--- Calculates cumulative goals per match
--- DENSE_RANK handles ties (1,1,2 or 1,2,3,3)
+-- Key Logic:
+1. Identify current top 3 from latest player snapshot (valid_to IS NULL)
+2. Filter matches: WHERE is_finished = TRUE (no future matches)
+3. Use 6-hour buffer for stat updates after match finish
+4. Flag latest records: is_current_top_3 = TRUE for current top 3
+
+-- Key Features:
+- 6-hour buffer for post-match stat updates
+- Filters to exclude future matches (only finished matches shown)
+- Current top 3 based on most recent player stats, not match datetime
+```
+
+#### **gold_tournament_summary**
+Tournament-wide KPIs for Dashboard #7.
+```sql
+-- Top Scorer Selection:
+ROW_NUMBER() OVER (
+    ORDER BY 
+        goals_scored DESC,
+        assists DESC,           -- ✅ Tiebreaker
+        minutes_played ASC
+)
+
+-- Key Features:
+- FIFA tiebreaker logic (goals → assists → minutes)
+- Correctly identifies top scorer with multi-criteria ranking
 ```
 
 ---
 
 ## 🧪 Data Quality Tests
 
-### **Silver Layer Tests** (models/silver/silver_matches.yml)
+### **Silver Layer Tests**
 
 **silver_matches:**
 - `match_id`: unique, not_null
@@ -234,72 +258,71 @@ Match-by-match timeline for top 3 scorers.
 - `goal_event_id`: unique, not_null
 - `match_id`: relationships to silver_matches
 - `team_id`, `scorer_name`, `minute`: not_null
-- `is_penalty`, `is_home_goal`: accepted_values (true/false)
-
-**silver_knockout_bracket:**
-- `match_id`: unique, not_null
-- `round`: accepted_values (R32, R16, QF, SF, Final, 3rd)
 
 ---
 
 ### **Pre-Gold Tests** (tests/pre_gold/)
 
-**assert_scorer_name_completeness.sql**
-- Fails if any finished match has goals with NULL/blank scorer_name
-- Critical for: gold_match_schedule, gold_team_summary
+1. **assert_scorer_name_completeness.sql**
+   - Fails if finished matches have NULL scorer_name
 
-**assert_all_matches_have_timezone_mapping.sql**
-- Fails if any match stadium is missing in ref_stadium_enriched
-- Critical for: UTC conversion in gold_match_schedule
+2. **assert_all_matches_have_timezone_mapping.sql**
+   - Fails if stadiums missing timezone mappings
 
-**assert_top_scorers_have_complete_stats.sql**
-- Fails if top scorers (goals > 0) have NULL assists/minutes/matches
-- Critical for: gold_player_leaderboard
+3. **assert_top_scorers_have_complete_stats.sql**
+   - Fails if top scorers have NULL assists/minutes
 
-**assert_match_datetime_parseable.sql**
-- Fails if match_date_local has invalid format for UTC conversion
+4. **assert_match_datetime_parseable.sql**
+   - Validates match_date_local format
 
-**assert_all_players_have_valid_teams.sql**
-- Fails if goal events reference non-existent teams
+5. **assert_all_players_have_valid_teams.sql**
+   - Validates goal events reference existing teams
 
-**assert_no_orphaned_goal_events.sql**
-- Fails if goal events reference non-existent matches
+6. **assert_no_orphaned_goal_events.sql**
+   - Validates goal events reference existing matches
 
 ---
 
-## 🚀 Running the Pipeline
+### **Gold Layer Tests** (tests/gold/)
 
-### **1. Prerequisites**
-```bash
-# Install dbt
-pip install dbt-databricks
+**Dashboard-aligned test files:**
+1. `test_req1_tournament_bracket_completeness.sql` (Dashboard #1)
+2. `test_req2_player_leaderboard_completeness.sql` (Dashboard #2)
+3. `test_req3_match_schedule_completeness.sql` (Dashboard #3)
+4. `test_req4_team_performance_completeness.sql` (Dashboard #5)
+5. `test_req5_points_table_completeness.sql` (Dashboard #5)
+6. `test_req6_golden_boot_race_completeness.sql` (Dashboard #6)
 
-# Install dbt packages (dbt_utils, dbt_expectations)
-dbt deps
+**Key Features:**
+- Tests 1 & 3: Check both `home_team_name IS NOT NULL AND away_team_name IS NOT NULL` to skip partially-assigned future knockout matches
+
+---
+
+## 🚀 Pipeline Execution
+
+### **Databricks Job: fifa_WorldCup_2026**
+
+**Job ID:** 616242111057580  
+**Schedule:** Twice daily (due to Databricks free edition limitations)  
+**Status:** Active
+
+**Task Flow:**
 ```
-
-### **2. Create ref_stadium_enriched (One-Time)**
-Run notebook: Create the static timezone mapping table in `singhal.fifa_worldcup_silver.ref_stadium_enriched`.
-
-### **3. Run Silver Layer**
-```bash
-dbt run --select silver_*
-```
-
-### **4. Run Pre-Gold Tests**
-```bash
-dbt test --select test_type:generic,silver_*
-dbt test --select pre_gold
-```
-
-### **5. Run Gold Layer**
-```bash
-dbt run --select gold_*
-```
-
-### **6. Full Pipeline**
-```bash
-dbt build  # Run + Test in dependency order
+1. refresh_bronze_layer_data (Notebook)
+   ↓
+2. knockout_calculation (Notebook)
+   ↓
+3. silver_layer_dbt_tranformation (dbt)
+   • dbt clean
+   • dbt deps
+   • dbt run --select tag:silver
+   • dbt test --select tag:silver
+   • dbt test --select path:tests/pre_gold
+   ↓
+4. gold_layer_dbt_transformation (dbt)
+   • dbt deps
+   • dbt run --select tag:gold
+   • dbt test --select tag:gold
 ```
 
 ---
@@ -319,8 +342,8 @@ Data-Pipelines/
 │   │   ├── silver_matches.yml        # Silver tests
 │   │   ├── silver_teams.sql
 │   │   ├── silver_players.sql
-│   │   ├── silver_matches.sql        # Group + Knockout union
-│   │   ├── silver_goal_events.sql    # Normalized goals
+│   │   ├── silver_matches.sql        # ⭐ Team normalization
+│   │   ├── silver_goal_events.sql    # Derived from matches
 │   │   ├── silver_group_standings.sql
 │   │   ├── silver_knockout_bracket.sql
 │   │   ├── silver_stadiums.sql
@@ -328,112 +351,93 @@ Data-Pipelines/
 │   │   └── silver_group_standings_history.sql
 │   │
 │   └── gold/
-│       ├── schema.yml                # Gold model docs
-│       ├── gold_tournament_bracket.sql
-│       ├── gold_player_leaderboard.sql
-│       ├── gold_match_schedule.sql   # Req #3 & #4
-│       ├── gold_points_table.sql
-│       ├── gold_golden_boot_race.sql
-│       ├── gold_team_summary.sql
-│       ├── gold_team_goals.sql
-│       └── gold_tournament_summary.sql
+│       ├── schema.yml
+│       ├── gold_fact_match_schedule.sql     # DR #1,#3,#4,#5
+│       ├── gold_team_goals.sql              # DR #1 (click)
+│       ├── gold_player_leaderboard.sql      # DR #2
+│       ├── gold_fact_team_performance.sql   # DR #5
+│       ├── gold_golden_boot_race.sql        # DR #6
+│       └── gold_tournament_summary.sql      # DR #7
 │
 ├── tests/
-│   ├── pre_gold/
-│   │   ├── assert_scorer_name_completeness.sql
-│   │   ├── assert_all_matches_have_timezone_mapping.sql
-│   │   ├── assert_top_scorers_have_complete_stats.sql
-│   │   ├── assert_match_datetime_parseable.sql
-│   │   ├── assert_all_players_have_valid_teams.sql
-│   │   └── assert_no_orphaned_goal_events.sql
-│   │
-│   └── (generic silver tests in models/silver/silver_matches.yml)
+│   ├── pre_gold/           # 6 pre-gold assertions
+│   ├── gold/               # 6 dashboard-aligned tests
+│   └── silver/             # Custom silver tests
 │
 └── macros/
-    └── generate_schema_name.sql  # Custom schema naming
+    └── generate_schema_name.sql
 ```
 
 ---
 
 ## 🔑 Key Design Decisions
 
-### **1. SCD Type 2 for Player Stats**
-Player statistics evolve match-by-match. `silver_player_stats_history` tracks every snapshot with `valid_from`/`valid_to` timestamps, enabling the Golden Boot Race timeline.
+### **1. Dual API Architecture**
+- **SportScore API:** Player stats (avoids double-counting)
+- **worldcup26.ir API:** Matches and stadiums (complete 104-match dataset)
+- Prevents conflicting data sources
 
-### **2. Match-Level Top Scorers (Not Tournament-Level)**
-Requirement #3 needs "top scorer of each team IN THIS MATCH", not overall tournament top scorer. Uses `goal_events` grouped by `match_id + team_id`, not `player_stats`.
+### **2. Quality Checks Before Overwrites**
+Both notebooks validate data quality:
+- Bronze notebook: min 50 players, 40 teams, 90 matches
+- Knockout notebook: min 25 knockout matches
+- **Prevents empty API responses from wiping good data**
 
-### **3. Unified Matches Table**
-`silver_matches` unions group stage and knockout matches into one table. Single source of truth for all 104 matches.
+### **3. goal_events in Silver, NOT Bronze**
+Derived from `bronze.matches` (home_scorers/away_scorers) in silver layer, avoiding raw API parsing issues.
 
-### **4. Static ref_stadium_enriched**
-Timezone mapping is manually created once via notebook. Not managed by dbt to avoid accidental overwrites. Referenced via `source('silver', 'ref_stadium_enriched')`.
+### **4. SCD Type 2 for Player Stats**
+`silver_player_stats_history` tracks snapshots with `valid_from`/`valid_to`, enabling timeline analysis for Golden Boot Race.
 
-### **5. DENSE_RANK for Ties**
-Golden Boot Race handles ties naturally: if 2 players share rank 1, the next is rank 2 (not rank 3). Allows visualizing 1,1,2 or 1,2,3,3 scenarios.
+### **5. Unified Match Table**
+`silver_matches` unions group + knockout into single source of truth. **All team name normalization logic lives here.**
 
-### **6. scorer_name as TEXT (No Fuzzy Join)**
-Goal events use `scorer_name` (TEXT) parsed from API strings. No player_id available. Acceptable for match-level attribution; use `player_stats` for accurate tournament leaderboards.
+### **6. 6-Hour Post-Match Buffer**
+Golden Boot Race uses `valid_from <= match_datetime_utc + INTERVAL 6 HOURS` because player stats update hours after match finish (e.g., Mbappé's goal in match 92 updated at 21:31 UTC, 2.5 hours after 19:00 finish).
 
----
+### **7. TBD Opponent Logic**
+Dashboard #1 (Tournament Bracket) handles future knockout matches:
+- `home_display_name`: Shows "Winner of QF1" or "TBD"
+- `away_display_name`: Shows "Winner of QF3" or "TBD"
+- Goals show "NA" for unfinished matches
 
-## ⚠️ Known Limitations
+### **8. Performance Optimization Pipeline**
+Separate optimization pipeline implements Databricks best practices:
+- **Z-Ordering:** Multi-dimensional clustering on frequently filtered columns (match_id, team_id, player_id)
+- **OPTIMIZE Command:** Compacts small files into larger ones for improved scan efficiency
+- **VACUUM Command:** Removes old data files no longer referenced by Delta tables, reclaiming storage space
+- **Table Maintenance:** Runs post-gold layer to reduce query latency
+- **Delta Lake Features:** Leverages Delta table optimization for faster dashboard queries
 
-1. **scorer_name Inconsistency:** Goal events may have spelling variations ("Messi" vs "L. Messi"). Match-level display only; use `player_stats` for accurate totals.
-
-2. **Manual ref_stadium_enriched:** Must be created once via notebook before running gold models.
-
-3. **Live Match Status:** Assumes matches are "live" if started within last 3 hours and `is_finished = FALSE`. Actual live status depends on upstream API updates.
-
-4. **Timezone Accuracy:** UTC conversion assumes ref_stadium_enriched is correct. Verify manually for DST edge cases.
-
----
-
-## 📊 Data Refresh Schedule
-
-**Recommended:**
-- **Bronze ingestion:** Every 15 minutes during matches, hourly otherwise
-- **Silver + Gold dbt:** Every 30 minutes during tournament, hourly otherwise
-- **Dashboard refresh:** Real-time query against gold tables
-
----
-
-## 🐛 Troubleshooting
-
-### **Test Failure: assert_all_matches_have_timezone_mapping**
-**Cause:** Missing stadiums in ref_stadium_enriched  
-**Fix:** Run notebook to create/update ref_stadium_enriched with all 16 stadiums
-
-### **Test Failure: assert_scorer_name_completeness**
-**Cause:** Goal events have NULL scorer_name  
-**Fix:** Check bronze.goal_events parsing logic; ensure home_scorers/away_scorers arrays are valid
-
-### **Empty gold_golden_boot_race**
-**Cause:** No SCD snapshots in silver_player_stats_history  
-**Fix:** Ensure player stats are ingested multiple times with different valid_from timestamps
-
-### **UTC Time Incorrect**
-**Cause:** Wrong utc_offset_hours in ref_stadium_enriched  
-**Fix:** Verify timezone offsets (e.g., EDT = -4, PDT = -7, CST = -6)
+**Implementation:**
+- Runs after gold layer transformations complete
+- Targets high-traffic tables: `gold_fact_match_schedule`, `gold_player_leaderboard`, `gold_fact_team_performance`
+- Z-Order columns aligned with dashboard filter patterns
+- VACUUM retains 7-day retention period for time travel capabilities
+- Scheduled independently to minimize impact on main pipeline runtime
 
 ---
 
 ## 🎯 Success Criteria
 
-✅ All 6 dashboard requirements supported  
-✅ All dbt tests passing (generic + pre-gold)  
-✅ Gold models refresh in < 5 minutes  
-✅ Accurate UTC conversion for all matches  
-✅ Golden Boot Race handles ties correctly  
-✅ Match-level top scorers display correctly  
+✅ All 7 dashboard representations supported  
+✅ All dbt tests passing (silver + pre-gold + gold)  
+✅ Quality checks prevent data loss  
+✅ Golden Boot Race shows current top 3 with correct goal counts  
+✅ Tournament summary uses FIFA tiebreaker (goals → assists → minutes)  
+✅ TBD opponent logic working for future knockout matches  
+✅ Pipeline runs twice daily on schedule without failures  
 
 ---
 
 ## 📚 Additional Resources
 
-* **Bronze Ingestion Notebook:** `/Users/abhisheksinghal861@gmail.com/fifa 2026 Static Raw data fetch`
-* **Architecture Notebook:** `/Users/abhisheksinghal861@gmail.com/FIFA 2026 Dashboard - Data Architecture`
+* **Bronze Notebooks:**
+  - `/Workspace/Users/abhisheksinghal861@gmail.com/Databricks_core_notebooks/Bronze_layer_data_fetch/fifa 2026 Static Raw data fetch`
+  - `/Workspace/Users/abhisheksinghal861@gmail.com/Databricks_core_notebooks/Bronze_layer_data_fetch/Knockout Bracket RAW Analysis`
 * **Unity Catalog:** `singhal.fifa_worldcup_bronze`, `singhal.fifa_worldcup_silver`, `singhal.fifa_worldcup_gold`
+* **Pipeline Job:** [fifa_WorldCup_2026](#job-616242111057580)
+* **Live Dashboard:** [https://singhal-fifa-2026-dashboard.vercel.app/](https://singhal-fifa-2026-dashboard.vercel.app/)
 
 ---
 
@@ -445,6 +449,7 @@ Workspace: Databricks (AWS)
 
 ---
 
-**Last Updated:** July 4, 2026  
-**dbt Version:** 1.5+  
-**Databricks Runtime:** 13.3 LTS or higher
+**Last Updated:** July 6, 2026  
+**dbt Version:** 1.11+  
+**Databricks Runtime:** Serverless (AWS)  
+**Dashboard Representations:** 7 (Tournament Bracket, Top Scorers, Live Matches, Match History, Points Table, Golden Boot Race, Tournament Summary)

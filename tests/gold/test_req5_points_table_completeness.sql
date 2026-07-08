@@ -11,7 +11,7 @@ WITH validation_failures AS (
     -- Check 1: All teams have group assignments
     SELECT
         'Missing group assignment' AS failure_type,
-        team_id,
+        team_name,
         CONCAT('Team ', team_name, ' has NULL group_name') AS failure_detail
     FROM {{ ref('gold_fact_team_performance') }}
     WHERE group_name IS NULL
@@ -21,46 +21,45 @@ WITH validation_failures AS (
     -- Check 2: All teams have logos
     SELECT
         'Missing team logo' AS failure_type,
-        team_id,
+        team_name,
         CONCAT('Team ', team_name, ' missing team_logo') AS failure_detail
     FROM {{ ref('gold_fact_team_performance') }}
     WHERE team_logo IS NULL
     
     UNION ALL
     
-    -- Check 3: Points calculation is valid (points = wins*3 + draws*1)
+    -- Check 3: Points calculation is valid (points = group_wins*3 + group_draws*1)
     SELECT
         'Invalid points calculation' AS failure_type,
-        team_id,
+        team_name,
         CONCAT('Team ', team_name, ' points mismatch - expected: ',
-               CAST((wins * 3 + draws) AS STRING),
-                ', actual: ', CAST(points AS STRING)) AS failure_detail
+               CAST((group_wins * 3 + group_draws) AS STRING),
+                ', actual: ', CAST(total_points AS STRING)) AS failure_detail
     FROM {{ ref('gold_fact_team_performance') }}
-    WHERE points != (wins * 3 + draws)
+    WHERE total_points != (group_wins * 3 + group_draws)
     
     UNION ALL
     
-    -- Check 4: Goal difference is valid (GF - GA)
+    -- Check 4: Goal difference is valid (group_goals_for - group_goals_against)
     SELECT
         'Invalid goal difference' AS failure_type,
-        team_id,
+        team_name,
         CONCAT('Team ', team_name, ' goal_diff mismatch - expected: ',
-               CAST((goals_for - goals_against) AS STRING),
-               ', actual: ', CAST(goal_difference AS STRING)) AS failure_detail
+               CAST((group_goals_for - group_goals_against) AS STRING),
+               ', actual: ', CAST(group_goal_difference AS STRING)) AS failure_detail
     FROM {{ ref('gold_fact_team_performance') }}
-    WHERE goal_difference != (goals_for - goals_against)
+    WHERE group_goal_difference != (group_goals_for - group_goals_against)
     
     UNION ALL
     
     -- Check 5: Group rankings should be sequential per group
     SELECT
         'Invalid group ranking' AS failure_type,
-        team_id,
+        team_name,
         CONCAT('Group ', group_name, ' has gap in rankings at position ', 
                rank_in_group) AS failure_detail
     FROM (
         SELECT
-            team_id,
             team_name,
             group_name,
             rank_in_group,
@@ -71,15 +70,15 @@ WITH validation_failures AS (
     
     UNION ALL
     
-    -- Check 6: Total matches should equal wins + draws + losses
+    -- Check 6: Group matches should equal group_wins + group_draws + group_losses
     SELECT
         'Invalid matches count' AS failure_type,
-        team_id,
+        team_name,
         CONCAT('Team ', team_name, ' matches mismatch - W+D+L: ',
-               CAST((wins + draws + losses) AS STRING),
-               ', matches_played: ', CAST(matches_played AS STRING)) AS failure_detail
+               CAST((group_wins + group_draws + group_losses) AS STRING),
+               ', group_matches_played: ', CAST(group_matches_played AS STRING)) AS failure_detail
     FROM {{ ref('gold_fact_team_performance') }}
-    WHERE matches_played != (wins + draws + losses)
+    WHERE group_matches_played != (group_wins + group_draws + group_losses)
 )
 
 SELECT

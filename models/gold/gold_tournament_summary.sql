@@ -24,7 +24,12 @@ top_scorer AS (
     SELECT
         p.player_name,
         psh.goals_scored,
-        ROW_NUMBER() OVER (ORDER BY psh.goals_scored DESC) AS rn
+        ROW_NUMBER() OVER (
+            ORDER BY 
+                psh.goals_scored DESC,
+                psh.assists DESC,
+                psh.minutes_played ASC
+        ) AS rn
     FROM {{ ref('silver_player_stats_history') }} psh
     JOIN {{ ref('silver_players') }} p ON psh.player_id = p.player_id
     WHERE psh.is_current = TRUE

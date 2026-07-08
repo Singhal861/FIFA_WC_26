@@ -19,6 +19,7 @@ WITH validation_failures AS (
     WHERE is_knockout = TRUE  -- Only check knockout matches
       AND (home_team_logo IS NULL OR away_team_logo IS NULL)
       AND home_team_name IS NOT NULL  -- Only check matches with assigned teams
+      AND away_team_name IS NOT NULL  -- Also check away team is assigned
     
     UNION ALL
     
@@ -31,6 +32,7 @@ WITH validation_failures AS (
     WHERE is_knockout = TRUE  -- Only check knockout matches
       AND match_datetime_utc IS NULL
       AND home_team_name IS NOT NULL  -- Only check matches with assigned teams
+      AND away_team_name IS NOT NULL  -- Also check away team is assigned
     
     UNION ALL
     
@@ -44,6 +46,7 @@ WITH validation_failures AS (
     WHERE is_knockout = TRUE  -- Only check knockout matches
       AND (stadium_name IS NULL OR actual_country IS NULL)
       AND home_team_name IS NOT NULL  -- Only check matches with assigned teams
+      AND away_team_name IS NOT NULL  -- Also check away team is assigned
     
     UNION ALL
     
@@ -57,17 +60,18 @@ WITH validation_failures AS (
       AND is_finished = TRUE 
       AND winner_team_id IS NULL
       AND home_team_name IS NOT NULL  -- Only check matches with assigned teams
+      AND away_team_name IS NOT NULL  -- Also check away team is assigned
     
     UNION ALL
     
-    -- Check 5: gold_team_summary has all teams with top scorers
+    -- Check 5: gold_fact_team_performance has all teams with top scorers
     SELECT
         'Missing team stats' AS failure_type,
-        team_id,
+        team_name AS match_id,
         CONCAT('Team ', team_name, ' missing stats - wins: ', 
                COALESCE(CAST(total_wins AS STRING), 'NULL'),
                ', logo: ', CASE WHEN team_logo IS NULL THEN 'NULL' ELSE 'OK' END) AS failure_detail
-    FROM {{ ref('gold_team_summary') }}
+    FROM {{ ref('gold_fact_team_performance') }}
     WHERE total_wins IS NULL OR team_logo IS NULL
 )
 

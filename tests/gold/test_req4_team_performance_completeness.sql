@@ -11,7 +11,7 @@ WITH validation_failures AS (
     -- Check 1: All teams have logos
     SELECT
         'Missing team logo' AS failure_type,
-        team_id,
+        team_name,
         CONCAT('Team ', team_name, ' missing team_logo') AS failure_detail
     FROM {{ ref('gold_fact_team_performance') }}
     WHERE team_logo IS NULL
@@ -21,7 +21,7 @@ WITH validation_failures AS (
     -- Check 2: All teams have complete stats
     SELECT
         'Missing team stats' AS failure_type,
-        team_id,
+        team_name,
         CONCAT('Team ', team_name, ' missing stats - wins: ', 
                COALESCE(CAST(total_wins AS STRING), 'NULL'),
                ', points: ', COALESCE(CAST(total_points AS STRING), 'NULL')) AS failure_detail
@@ -48,7 +48,7 @@ WITH validation_failures AS (
     -- Check 5: All goals should have associated matches
     SELECT
         'Orphaned goal' AS failure_type,
-        team_id,
+        team_name,
         CONCAT('Goal for team ', team_name, ' has NULL match_id') AS failure_detail
     FROM {{ ref('gold_team_goals') }}
     WHERE match_id IS NULL

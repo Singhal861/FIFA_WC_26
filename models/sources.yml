@@ -37,12 +37,50 @@ sources:
     database: singhal
     schema: fifa_worldcup_silver
     description: >
-      Silver layer reference tables that are NOT managed by dbt.
-      These are one-time static tables created manually via notebooks.
+      Silver layer tables containing cleaned and transformed World Cup 2026 data.
+      Some tables are managed by dbt, others are reference tables created manually.
     
     tables:
+      # Reference tables (manually created, not managed by dbt)
       - name: ref_stadium_enriched
         description: |
           Static reference table for stadium timezone and country mapping.
           Created manually in notebook (one-time table, not managed by dbt).
           Used for UTC conversion in gold layer.
+      
+      # Core silver tables (managed by dbt silver models)
+      - name: silver_matches
+        description: |
+          Cleaned and enriched match data with scores, status, winner calculations.
+          Includes knockout bracket structure and timezone conversions.
+      
+      - name: silver_goal_events
+        description: |
+          Individual goal events with scorer names, minutes, penalties.
+          Cleaned and deduplicated from bronze goal_events.
+      
+      - name: silver_teams
+        description: |
+          Team information with logos, group assignments, and metadata.
+          Enriched from bronze teams table.
+      
+      - name: silver_players
+        description: |
+          Player roster with team associations and metadata.
+          Cleaned from bronze players table.
+      
+      - name: silver_stadiums
+        description: |
+          Stadium information including names and locations.
+          Cleaned from bronze stadiums table.
+      
+      - name: silver_group_standings
+        description: |
+          Group stage standings with points, wins, losses, draws.
+          Transformed from bronze group_standings.
+      
+      - name: silver_player_stats_history
+        description: |
+          Historical snapshots of player statistics (goals, assists, rating).
+          SCD Type 2 table with valid_from timestamps and is_current flag.
+          Used for time-series analysis and golden boot race tracking.

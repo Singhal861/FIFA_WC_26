@@ -16,14 +16,22 @@ WITH group_matches AS (
         CASE 
             WHEN home_team_name = 'United States' THEN 'USA'
             WHEN home_team_name = "Ivory Coast" THEN "Cote d'Ivoire"
-            When home_team_name = 'Cape Verde' THEN 'Cabo Verde'    
+            WHEN home_team_name = 'Cape Verde' THEN 'Cabo Verde'
+            WHEN home_team_name = 'Czech Republic' THEN 'Czechia'
+            WHEN home_team_name = 'Iran' THEN 'IR Iran'
+            WHEN home_team_name = 'Curaçao' THEN 'Curacao'
+            WHEN home_team_name = 'Turkey' THEN 'Turkiye'
             ELSE home_team_name
         END AS home_team_name,
         
         CASE 
             WHEN away_team_name = 'United States' THEN 'USA'
             WHEN away_team_name = "Ivory Coast" THEN "Cote d'Ivoire"
-            When away_team_name = 'Cape Verde' THEN 'Cabo Verde'
+            WHEN away_team_name = 'Cape Verde' THEN 'Cabo Verde'
+            WHEN away_team_name = 'Czech Republic' THEN 'Czechia'
+            WHEN away_team_name = 'Iran' THEN 'IR Iran'
+            WHEN away_team_name = 'Curaçao' THEN 'Curacao'
+            WHEN away_team_name = 'Turkey' THEN 'Turkiye'
             ELSE away_team_name
         END AS away_team_name,
         
@@ -49,14 +57,22 @@ WITH group_matches AS (
                 CASE 
                     WHEN home_team_name = 'United States' THEN 'USA'
                     WHEN home_team_name = "Ivory Coast" THEN "Cote d'Ivoire"
-                    When home_team_name = 'Cape Verde' THEN 'Cabo Verde'    
+                    WHEN home_team_name = 'Cape Verde' THEN 'Cabo Verde'
+                    WHEN home_team_name = 'Czech Republic' THEN 'Czechia'
+                    WHEN home_team_name = 'Iran' THEN 'IR Iran'
+                    WHEN home_team_name = 'Curaçao' THEN 'Curacao'
+                    WHEN home_team_name = 'Turkey' THEN 'Turkiye'
                     ELSE home_team_name
                 END
             WHEN UPPER(finished) = 'TRUE' AND away_score > home_score THEN 
                 CASE 
                     WHEN away_team_name = 'United States' THEN 'USA'
                     WHEN away_team_name = "Ivory Coast" THEN "Cote d'Ivoire"
-                    When away_team_name = 'Cape Verde' THEN 'Cabo Verde'
+                    WHEN away_team_name = 'Cape Verde' THEN 'Cabo Verde'
+                    WHEN away_team_name = 'Czech Republic' THEN 'Czechia'
+                    WHEN away_team_name = 'Iran' THEN 'IR Iran'
+                    WHEN away_team_name = 'Curaçao' THEN 'Curacao'
+                    WHEN away_team_name = 'Turkey' THEN 'Turkiye'
                     ELSE away_team_name
                 END
             WHEN UPPER(finished) = 'TRUE' AND home_score = away_score THEN 'Draw'
@@ -87,14 +103,22 @@ knockout_matches AS (
         CASE 
             WHEN home_team = 'United States' THEN 'USA'
             WHEN home_team = "Ivory Coast" THEN "Cote d'Ivoire"
-            When home_team = 'Cape Verde' THEN 'Cabo Verde'
+            WHEN home_team = 'Cape Verde' THEN 'Cabo Verde'
+            WHEN home_team = 'Czech Republic' THEN 'Czechia'
+            WHEN home_team = 'Iran' THEN 'IR Iran'
+            WHEN home_team = 'Curaçao' THEN 'Curacao'
+            WHEN home_team = 'Turkey' THEN 'Turkiye'
             ELSE home_team
         END AS home_team_name,
         
         CASE 
             WHEN away_team = 'United States' THEN 'USA'
             WHEN away_team = "Ivory Coast" THEN "Cote d'Ivoire"
-            When away_team = 'Cape Verde' THEN 'Cabo Verde'
+            WHEN away_team = 'Cape Verde' THEN 'Cabo Verde'
+            WHEN away_team = 'Czech Republic' THEN 'Czechia'
+            WHEN away_team = 'Iran' THEN 'IR Iran'
+            WHEN away_team = 'Curaçao' THEN 'Curacao'
+            WHEN away_team = 'Turkey' THEN 'Turkiye'
             ELSE away_team
         END AS away_team_name,
         
@@ -125,6 +149,10 @@ knockout_matches AS (
             WHEN winner_team = 'United States' THEN 'USA'
             WHEN winner_team = "Ivory Coast" THEN "Cote d'Ivoire"
             WHEN winner_team = 'Cape Verde' THEN 'Cabo Verde'
+            WHEN winner_team = 'Czech Republic' THEN 'Czechia'
+            WHEN winner_team = 'Iran' THEN 'IR Iran'
+            WHEN winner_team = 'Curaçao' THEN 'Curacao'
+            WHEN winner_team = 'Turkey' THEN 'Turkiye'
             ELSE winner_team
         END AS winner_team,
         
@@ -134,6 +162,10 @@ knockout_matches AS (
             WHEN loser_team = 'United States' THEN 'USA'
             WHEN loser_team = "Ivory Coast" THEN "Cote d'Ivoire"
             WHEN loser_team = 'Cape Verde' THEN 'Cabo Verde'
+            WHEN loser_team = 'Czech Republic' THEN 'Czechia'
+            WHEN loser_team = 'Iran' THEN 'IR Iran'
+            WHEN loser_team = 'Curaçao' THEN 'Curacao'
+            WHEN loser_team = 'Turkey' THEN 'Turkiye'
             ELSE loser_team
         END AS loser_team,
         

@@ -18,6 +18,7 @@ WITH validation_failures AS (
     FROM {{ ref('gold_fact_match_schedule') }}
     WHERE (home_team_logo IS NULL OR away_team_logo IS NULL)
       AND home_team_name IS NOT NULL  -- Skip TBD future matches
+      AND away_team_name IS NOT NULL  -- Also check away team is assigned
     
     UNION ALL
     
