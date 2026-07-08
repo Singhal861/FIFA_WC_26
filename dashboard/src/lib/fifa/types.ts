@@ -73,7 +73,8 @@ export interface UpcomingLiveMatch {
   stadium_name: string;
   stadium_city: string;
   actual_country?: string;
-  live_minute?: number | null;
+  minutes_elapsed?: number | null;
+  hours_until_kickoff?: number | null;
 }
 
 export interface FinishedMatch {

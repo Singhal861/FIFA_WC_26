@@ -22,7 +22,7 @@ export function LiveUpcomingMatches() {
               {isLive ? (
                 <span className="flex items-center gap-1 font-semibold text-red-500">
                   <span className="h-2 w-2 animate-pulse rounded-full bg-red-500" />
-                  LIVE {m.live_minute ? `${m.live_minute}'` : ""}
+                  LIVE {m.minutes_elapsed ? `${m.minutes_elapsed}'` : ""}
                 </span>
               ) : (
                 <span>{delta.label}</span>
