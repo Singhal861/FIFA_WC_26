@@ -16,7 +16,7 @@ export function TournamentSummary() {
       className="grid gap-3"
       style={{ gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))" }}
     >
-      {cell("Tournament", s.tournament_name)}
+      {cell("Tournament", `FIFA WC 26`)}
       {cell("Matches", `${s.completed_matches}/${s.total_matches}`)}
       {cell("Remaining", s.remaining_matches)}
       {cell("Goals", s.total_goals)}
