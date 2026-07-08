@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Github, Mail, Phone } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { TournamentSummary } from "@/components/fifa/TournamentSummary";
 import { TournamentBracket } from "@/components/fifa/TournamentBracket";
@@ -123,7 +123,33 @@ function DashboardPage() {
         </Section>
       </div>
       <footer className="border-t py-6 text-center text-xs text-muted-foreground">
-        Data source: <code>/api/dashboard</code> (Databricks gold tables) — swap via <code>setDataBase(url)</code> to point elsewhere.
+        <div className="flex flex-col items-center gap-2">
+          <p>
+            Created &amp; designed by <span className="font-medium text-foreground">Abhishek Singhal</span>
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <a
+              href="https://github.com/Singhal861"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 hover:text-foreground"
+            >
+              <Github className="h-3.5 w-3.5" />
+              github.com/Singhal861
+            </a>
+            <a
+              href="mailto:abhisheksinghal861@gmail.com"
+              className="flex items-center gap-1.5 hover:text-foreground"
+            >
+              <Mail className="h-3.5 w-3.5" />
+              abhisheksinghal861@gmail.com
+            </a>
+            <a href="tel:+918171576670" className="flex items-center gap-1.5 hover:text-foreground">
+              <Phone className="h-3.5 w-3.5" />
+              +91 81715 76670
+            </a>
+          </div>
+        </div>
       </footer>
     </main>
   );
