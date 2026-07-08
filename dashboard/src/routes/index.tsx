@@ -125,7 +125,7 @@ function DashboardPage() {
         </Section>
       </div>
       <footer className="border-t py-6 text-center text-xs text-muted-foreground">
-        Data source: <code>/public/data/req_*.json</code> — swap via <code>setDataBase(url)</code> for Databricks output.
+        Data source: <code>/api/dashboard</code> (Databricks gold tables) — swap via <code>setDataBase(url)</code> to point elsewhere.
       </footer>
     </main>
   );
