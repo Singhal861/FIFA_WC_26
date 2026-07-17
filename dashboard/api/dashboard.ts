@@ -208,6 +208,7 @@ const queries = {
       AND is_finished = FALSE
       AND home_team_name IS NOT NULL
       AND away_team_name IS NOT NULL
+      AND 1 = 0  -- TEMPORARY TEST: Force empty result to test Tournament Results switch
     ORDER BY match_datetime_utc ASC;
   `,
 
