@@ -10,54 +10,30 @@ type Podium = {
 };
 
 function pickPodium(bracket: BracketMatch[] | undefined): Podium[] {
-  // TEMPORARY MOCK DATA - Remove after testing!
-  const MOCK_PODIUM: Podium[] = [
-    {
-      place: 1,
-      label: "Winner",
-      team_name: "Spain",
-      team_logo: "https://img.thesports.com/football/team/330b1095d20af4bc1f6a415ae5717ba2.png"
-    },
-    {
-      place: 2,
-      label: "Runner-up",
-      team_name: "Argentina",
-      team_logo: "https://img.thesports.com/football/team/e5e5e0f67481324ebdbd65d65890b2b8.png"
-    },
-    {
+  if (!bracket) return [];
+  const final = bracket.find((m) => m.stage === "Final" && m.match_status === "Finished");
+  const third = bracket.find((m) => m.stage === "Third Place" && m.match_status === "Finished");
+  const out: Podium[] = [];
+  if (final && final.winner_team_name) {
+    const winner = final.winner_team_name;
+    const runnerName =
+      winner === final.home_team_name ? final.away_team_name : final.home_team_name;
+    const runnerLogo =
+      winner === final.home_team_name ? final.away_team_logo : final.home_team_logo;
+    out.push({ place: 1, label: "Winner", team_name: winner, team_logo: final.winner_team_logo });
+    if (runnerName) {
+      out.push({ place: 2, label: "Runner-up", team_name: runnerName, team_logo: runnerLogo });
+    }
+  }
+  if (third && third.winner_team_name) {
+    out.push({
       place: 3,
       label: "Third Place",
-      team_name: "France",
-      team_logo: "https://img.thesports.com/football/team/c25d791bcb75569e9e2538e6c88dcad4.png"
-    }
-  ];
-  return MOCK_PODIUM;
-  
-  // Original logic (commented out for testing)
-  // if (!bracket) return [];
-  // const final = bracket.find((m) => m.stage === "Final" && m.match_status === "Finished");
-  // const third = bracket.find((m) => m.stage === "Third Place" && m.match_status === "Finished");
-  // const out: Podium[] = [];
-  // if (final && final.winner_team_name) {
-  //   const winner = final.winner_team_name;
-  //   const runnerName =
-  //     winner === final.home_team_name ? final.away_team_name : final.home_team_name;
-  //   const runnerLogo =
-  //     winner === final.home_team_name ? final.away_team_logo : final.home_team_logo;
-  //   out.push({ place: 1, label: "Winner", team_name: winner, team_logo: final.winner_team_logo });
-  //   if (runnerName) {
-  //     out.push({ place: 2, label: "Runner-up", team_name: runnerName, team_logo: runnerLogo });
-  //   }
-  // }
-  // if (third && third.winner_team_name) {
-  //   out.push({
-  //     place: 3,
-  //     label: "Third Place",
-  //     team_name: third.winner_team_name,
-  //     team_logo: third.winner_team_logo,
-  //   });
-  // }
-  // return out;
+      team_name: third.winner_team_name,
+      team_logo: third.winner_team_logo,
+    });
+  }
+  return out;
 }
 
 const STYLES: Record<
