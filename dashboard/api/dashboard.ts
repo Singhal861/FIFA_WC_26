@@ -389,7 +389,7 @@ export default async function handler(
 
     res.setHeader(
       "Cache-Control",
-      "s-maxage=28800, stale-while-revalidate=600"
+      "s-maxage=63072000, stale-while-revalidate=31536000"  // 2-year cache (WC finished)
     );
 
     return res.status(200).json({
