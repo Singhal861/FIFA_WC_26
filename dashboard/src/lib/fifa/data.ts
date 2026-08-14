@@ -140,7 +140,7 @@ function normalizeRows<T>(rows: RawRow[] | undefined | null): T[] {
 // and briefly reuses the result for near-simultaneous calls.
 let inflight: Promise<DashboardApiResponse> | null = null;
 let cachedAt = 0;
-const CACHE_TTL_MS = 60_000;
+const CACHE_TTL_MS = 31_536_000_000;  // 1 year (static dashboard)
 
 async function fetchDashboard(): Promise<DashboardApiResponse> {
   if (inflight && Date.now() - cachedAt < CACHE_TTL_MS) {
