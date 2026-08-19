@@ -131,20 +131,63 @@ function normalizeRows<T>(rows: RawRow[] | undefined | null): T[] {
   return (rows ?? []).map((r) => normalizeRow<T>(r));
 }
 
-// -------- Fetch + in-memory cache --------
+// -------- Fetch + cache (in-memory + localStorage) --------
 // Every dataset comes from the same /api/dashboard endpoint, but each
 // component reads its own slice through a separate react-query key
 // (["fifa","bracket"], ["fifa","points"], etc). Without this memoization,
 // mounting the dashboard would fire 8 concurrent requests to /api/dashboard
 // for a single page load. This cache de-dupes those into one network call
-// and briefly reuses the result for near-simultaneous calls.
+// and reuses the result across page reloads for the cache TTL.
 let inflight: Promise<DashboardApiResponse> | null = null;
 let cachedAt = 0;
-const CACHE_TTL_MS = 31_536_000_000;  // 1 year (static dashboard)
+const CACHE_TTL_MS = 31_536_000_000; // 1 year (static dashboard)
+const STORAGE_KEY = "fifa-dashboard-cache-v1";
+
+type StoredDashboardCache = {
+  cachedAt: number;
+  data: DashboardApiResponse;
+};
+
+function readStoredDashboard(): DashboardApiResponse | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as StoredDashboardCache;
+    if (!parsed?.data?.success || Date.now() - parsed.cachedAt >= CACHE_TTL_MS) {
+      window.localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
+    return parsed.data;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredDashboard(data: DashboardApiResponse) {
+  if (typeof window === "undefined") return;
+  try {
+    const payload: StoredDashboardCache = { cachedAt: Date.now(), data };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+  } catch {
+    // Ignore quota / private-mode storage errors.
+  }
+}
+
+function useCachedDashboard(data: DashboardApiResponse) {
+  cachedAt = Date.now();
+  inflight = Promise.resolve(data);
+  return data;
+}
 
 async function fetchDashboard(): Promise<DashboardApiResponse> {
   if (inflight && Date.now() - cachedAt < CACHE_TTL_MS) {
     return inflight;
+  }
+
+  const stored = readStoredDashboard();
+  if (stored) {
+    return useCachedDashboard(stored);
   }
 
   cachedAt = Date.now();
@@ -157,6 +200,7 @@ async function fetchDashboard(): Promise<DashboardApiResponse> {
       if (!json.success) {
         throw new Error(json.error ?? "Dashboard API returned success: false");
       }
+      writeStoredDashboard(json);
       return json;
     })
     .catch((err) => {

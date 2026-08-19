@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Moon, Sun, Github, Mail, Phone } from "lucide-react";
+import { useIsFetching } from "@tanstack/react-query";
+import { Moon, Sun, Github, Mail, Phone, Loader2 } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { TournamentSummary } from "@/components/fifa/TournamentSummary";
 import { TournamentBracket } from "@/components/fifa/TournamentBracket";
 import { TopScorers } from "@/components/fifa/TopScorers";
-import { LiveOrResults } from "@/components/fifa/LiveOrResults";
+import { TournamentResults } from "@/components/fifa/TournamentResults";
 import { FinishedMatchesTable } from "@/components/fifa/FinishedMatchesTable";
 import { PointsTable } from "@/components/fifa/PointsTable";
 import { GoldenBootProgression } from "@/components/fifa/GoldenBootProgression";
@@ -73,7 +74,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 const NAV_ITEMS = [
   { id: "summary", label: "Summary" },
-  { id: "live", label: "Live & Upcoming" },
+  { id: "results", label: "Tournament Result" },
   { id: "bracket", label: "Bracket" },
   { id: "scorers", label: "Top Scorers" },
   { id: "golden-boot", label: "Golden Boot" },
@@ -103,6 +104,8 @@ function SectionNav() {
 }
 
 function DashboardPage() {
+  const isDashboardLoading = useIsFetching({ queryKey: ["fifa"] }) > 0;
+
   return (
     <main className="min-h-screen bg-background text-foreground [scroll-behavior:smooth]">
       <header className="border-b bg-card">
@@ -121,7 +124,15 @@ function DashboardPage() {
               />
             </div>
             <div>
-              <h1 className="text-2xl font-bold sm:text-3xl">FIFA World Cup 2026 Dashboard</h1>
+              <h1 className="flex items-center gap-2 text-2xl font-bold sm:text-3xl">
+                FIFA World Cup 2026 Dashboard
+                {isDashboardLoading && (
+                  <Loader2
+                    className="h-5 w-5 shrink-0 animate-spin text-foreground sm:h-6 sm:w-6"
+                    aria-label="Loading dashboard data"
+                  />
+                )}
+              </h1>
               <p className="mt-1 max-w-2xl text-sm text-muted-foreground sm:text-base">
                 Real-time bracket, standings, and player analytics.
               </p>
@@ -137,8 +148,10 @@ function DashboardPage() {
         <section id="summary" className="scroll-mt-20">
           <TournamentSummary />
         </section>
-        <section id="live" className="scroll-mt-20">
-          <LiveOrResults />
+        <section id="results" className="scroll-mt-20">
+          <Section title="Tournament Result">
+            <TournamentResults />
+          </Section>
         </section>
         <section id="bracket" className="scroll-mt-20">
           <Section title="Tournament Bracket">

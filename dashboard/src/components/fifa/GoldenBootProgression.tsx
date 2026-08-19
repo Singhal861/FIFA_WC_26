@@ -221,6 +221,26 @@ export function GoldenBootProgression() {
         <div className="mt-3 border-t pt-2 text-[11px] text-muted-foreground">
           FIFA tiebreakers: goals → assists → fewer minutes.
         </div>
+
+        {leaders[0] && (
+          <div className="mt-4 flex flex-col items-center rounded-2xl border border-amber-300/40 bg-gradient-to-b from-amber-400/10 via-amber-300/5 to-transparent px-4 py-5 text-center">
+            {leaders[0].player_logo ? (
+              <img
+                src={leaders[0].player_logo}
+                alt={leaders[0].player_name}
+                className="h-28 w-28 rounded-full border-2 border-amber-300/60 object-cover shadow-[0_0_24px_rgba(251,191,36,0.35)]"
+              />
+            ) : (
+              <div className="h-28 w-28 rounded-full bg-muted" />
+            )}
+            <div className="mt-3 text-base font-semibold text-foreground">
+              {leaders[0].player_name} : {leaders[0].goals_cumulative}
+            </div>
+            <div className="mt-2 inline-block rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 px-3 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-950">
+              Golden Boot Winner
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
