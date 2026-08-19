@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Moon, Sun, Github, Mail, Phone } from "lucide-react";
+import { useIsFetching } from "@tanstack/react-query";
+import { Moon, Sun, Github, Mail, Phone, Loader2 } from "lucide-react";
 import { createFileRoute } from "@tanstack/react-router";
 import { TournamentSummary } from "@/components/fifa/TournamentSummary";
 import { TournamentBracket } from "@/components/fifa/TournamentBracket";
@@ -103,6 +104,8 @@ function SectionNav() {
 }
 
 function DashboardPage() {
+  const isDashboardLoading = useIsFetching({ queryKey: ["fifa"] }) > 0;
+
   return (
     <main className="min-h-screen bg-background text-foreground [scroll-behavior:smooth]">
       <header className="border-b bg-card">
@@ -121,7 +124,15 @@ function DashboardPage() {
               />
             </div>
             <div>
-              <h1 className="text-2xl font-bold sm:text-3xl">FIFA World Cup 2026 Dashboard</h1>
+              <h1 className="flex items-center gap-2 text-2xl font-bold sm:text-3xl">
+                FIFA World Cup 2026 Dashboard
+                {isDashboardLoading && (
+                  <Loader2
+                    className="h-5 w-5 shrink-0 animate-spin text-foreground sm:h-6 sm:w-6"
+                    aria-label="Loading dashboard data"
+                  />
+                )}
+              </h1>
               <p className="mt-1 max-w-2xl text-sm text-muted-foreground sm:text-base">
                 Real-time bracket, standings, and player analytics.
               </p>
