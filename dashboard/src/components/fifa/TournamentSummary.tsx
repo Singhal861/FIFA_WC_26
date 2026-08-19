@@ -18,11 +18,8 @@ export function TournamentSummary() {
     >
       {cell("Tournament", `FIFA WC 26`)}
       {cell("Matches", `${s.completed_matches}/${s.total_matches}`)}
-      {cell("Remaining", s.remaining_matches)}
       {cell("Goals", s.total_goals)}
       {cell("Avg Goals", s.avg_goals_per_match.toFixed(2))}
-      {cell("Round", s.current_round)}
-      {cell("Teams Left", s.teams_remaining)}
       {cell("Top Scorer", `${s.top_scorer_name} (${s.top_scorer_goals})`)}
     </div>
   );

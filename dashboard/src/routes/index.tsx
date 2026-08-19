@@ -4,7 +4,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { TournamentSummary } from "@/components/fifa/TournamentSummary";
 import { TournamentBracket } from "@/components/fifa/TournamentBracket";
 import { TopScorers } from "@/components/fifa/TopScorers";
-import { LiveOrResults } from "@/components/fifa/LiveOrResults";
+import { TournamentResults } from "@/components/fifa/TournamentResults";
 import { FinishedMatchesTable } from "@/components/fifa/FinishedMatchesTable";
 import { PointsTable } from "@/components/fifa/PointsTable";
 import { GoldenBootProgression } from "@/components/fifa/GoldenBootProgression";
@@ -73,7 +73,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 const NAV_ITEMS = [
   { id: "summary", label: "Summary" },
-  { id: "live", label: "Live & Upcoming" },
+  { id: "results", label: "Tournament Result" },
   { id: "bracket", label: "Bracket" },
   { id: "scorers", label: "Top Scorers" },
   { id: "golden-boot", label: "Golden Boot" },
@@ -137,8 +137,10 @@ function DashboardPage() {
         <section id="summary" className="scroll-mt-20">
           <TournamentSummary />
         </section>
-        <section id="live" className="scroll-mt-20">
-          <LiveOrResults />
+        <section id="results" className="scroll-mt-20">
+          <Section title="Tournament Result">
+            <TournamentResults />
+          </Section>
         </section>
         <section id="bracket" className="scroll-mt-20">
           <Section title="Tournament Bracket">
